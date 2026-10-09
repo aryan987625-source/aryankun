@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<!--
+  ARYAN personal portfolio. Single file, vanilla HTML/CSS/JS, no build step.
+  Search for "EDIT:" to find the places to personalise.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ARYAN | Personal Portfolio</title>
+<meta name="description" content="Aryan's personal portfolio: journey, skills, projects, goals and ways to get in touch.">
+<meta property="og:title" content="ARYAN | Personal Portfolio">
+<meta property="og:description" content="Building My Future, One Idea at a Time.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&family=VT323&display=swap" rel="stylesheet">
+<style>
+  /* TOKENS */
+  :root{
+    --ink:#0B0B0B;
+    --ink-2:#161616;
+    --orange:#FF5826;   /* hot orange, softened a touch from #FF4A00 */
+    --lime:#D0F53A;     /* acid lime, softened a touch from #D4FF00 */
+    --bone:#F3EFE3;
+    --pink:#FF3D7F;
+    --white:#FFFFFF;
+
+    --font-display:"Anton", "Arial Narrow", sans-serif;
+    --font-body:"Space Grotesk", system-ui, sans-serif;
+    --font-pixel:"VT323", ui-monospace, monospace;
+
+    --pop:cubic-bezier(0.16, 1, 0.3, 1);      /* snappy expo out */
+    --snap:cubic-bezier(0.34, 1.56, 0.64, 1); /* slight overshoot */
+
+    --bar:60px;          /* top bar height, desktop */
+    --foot:50px;         /* fixed footer bar height, desktop */
+    --edge:clamp(18px, 3.6vw, 50px);
+  }
+
+  /* RESET */
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    font-family:var(--font-body);
+    background:var(--ink);
+    color:var(--white);
+    line-height:1.4;
+    overflow:hidden;            /* deck owns the scroll */
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+  img{max-width:100%;display:block}
+  ::selection{background:var(--lime);color:var(--ink)}
+
+  /* CUSTOM SCROLLBARS */
+  .scrollable{scrollbar-width:thin;scrollbar-color:var(--orange) transparent}
+  .scrollable::-webkit-scrollbar{width:9px;height:9px}
+  .scrollable::-webkit-scrollbar-track{background:rgba(255,255,255,.06)}
+  .scrollable::-webkit-scrollbar-thumb{
+    background:var(--orange);
+    border:2px solid var(--ink);
+    border-radius:0;
+  }
+  .scrollable::-webkit-scrollbar-thumb:hover{background:var(--lime)}
+  .s-lime .scrollable,.s-bone .scrollable{scrollbar-color:var(--ink) transparent}
+  .s-lime .scrollable::-webkit-scrollbar-thumb,
+  .s-bone .scrollable::-webkit-scrollbar-thumb{background:var(--ink);border-color:transparent}
+
+  /* TOP BAR */
+  .topbar{
+    position:fixed;top:0;left:0;right:0;z-index:60;
+    height:var(--bar);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 var(--edge);
+    background:var(--ink);
+    border-bottom:3px solid var(--lime);
+  }
+  .mark{
+    font-family:var(--font-display);
+    font-size:clamp(19px,2.2vw,26px);
+    letter-spacing:.5px;line-height:1;color:var(--white);
+    display:inline-flex;align-items:center;gap:.4em;
+  }
+  .mark b{color:var(--orange)}
+  .mark .dot{
+    width:.42em;height:.42em;background:var(--lime);border-radius:50%;
+    display:inline-block;animation:blink 1.4s steps(2) infinite;
+  }
+  @keyframes blink{50%{opacity:0}}
+
+  .topright{display:flex;align-items:center;gap:clamp(12px,2vw,20px)}
+  .counter{
+    font-family:var(--font-pixel);
+    font-size:21px;letter-spacing:1px;color:var(--lime);
+    white-space:nowrap;
+  }
+  .counter .now{color:var(--white)}
+  .menu-btn{
+    font-family:var(--font-pixel);font-size:21px;letter-spacing:2px;
+    background:var(--orange);color:var(--ink);
+    padding:5px 15px 3px;border:3px solid var(--ink);
+    box-shadow:4px 4px 0 var(--lime);
+    transition:transform .18s var(--snap),box-shadow .18s var(--pop);
+  }
+  .menu-btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--lime)}
+  .menu-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--lime)}
+
+  /* progress bar under the top bar */
+  .progress{
+    position:fixed;top:var(--bar);left:0;right:0;z-index:60;height:5px;
+    background:rgba(255,255,255,.08);
+  }
+  .progress i{
+    display:block;height:100%;width:11.11%;
+    background:var(--orange);
+    transition:width .5s var(--pop);
+  }
+
+  /* DECK + SLIDES */
+  .deck{position:fixed;inset:0;overflow:hidden}
+  .slide{
+    position:absolute;inset:0;
+    opacity:0;visibility:hidden;
+    /* the background only fades, the content carries the staggered motion */
+    transition:opacity .26s var(--pop),visibility 0s linear .26s;
+  }
+  .slide.active{
+    opacity:1;visibility:visible;z-index:1;
+    /* incoming background fades in just after the outgoing one is gone */
+    transition:opacity .3s var(--pop) .24s,visibility 0s;
+  }
+  .slide.leaving{
+    opacity:0;z-index:2;        /* outgoing sits on top and fades out first */
+    transition:opacity .26s var(--pop),visibility 0s linear .26s;
+  }
+
+  /* scrollable inner column. content centers, footer pins to the bottom */
+  .inner{
+    position:relative;z-index:1;
+    height:100%;width:100%;
+    overflow-y:auto;overflow-x:hidden;
+    padding:calc(var(--bar) + 18px) var(--edge) calc(var(--foot) + 12px);
+    display:flex;flex-direction:column;
+  }
+  .wrap{width:100%;max-width:1120px;margin:auto}   /* auto margins center the block vertically */
+
+  /* one persistent background layer behind every slide. it animates its
+     background-color directly, so a colour change is a true hue to hue blend
+     (orange straight to black) with no opacity crossfade and no muddy dip */
+  .stage-bg{
+    position:absolute;inset:0;z-index:0;
+    background-color:var(--ink);
+    transition:background-color .62s var(--pop);
+    will-change:background-color;
+  }
+
+  /* slides keep their TEXT colour but the background is owned by .stage-bg,
+     so slide opacity only fades the content, never the colour */
+  .s-ink   {color:var(--white)}
+  .s-orange{color:var(--ink)}
+  .s-lime  {color:var(--ink)}
+  .s-bone  {color:var(--ink)}
+
+  /* halftone atmosphere so slides are never flat */
+  .s-ink::before,.s-orange::before,.s-lime::before,.s-bone::before{
+    content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+    background-image:radial-gradient(currentColor 1px,transparent 1.4px);
+    background-size:26px 26px;opacity:.06;
+  }
+
+  /* TYPE HELPERS */
+  .kicker{
+    font-family:var(--font-pixel);font-size:clamp(16px,1.7vw,21px);
+    letter-spacing:3px;text-transform:uppercase;
+    display:inline-block;
+  }
+  .huge{
+    font-family:var(--font-display);
+    font-size:clamp(50px,11vw,142px);
+    line-height:.86;letter-spacing:-.5px;text-transform:uppercase;
+  }
+  .big{
+    font-family:var(--font-display);
+    font-size:clamp(30px,4.6vw,58px);
+    line-height:1.08;letter-spacing:.5px;text-transform:uppercase;  /* loose enough that the two lines never touch */
+  }
+  .mid{
+    font-family:var(--font-display);
+    font-size:clamp(24px,3.4vw,42px);
+    line-height:.98;letter-spacing:.5px;text-transform:uppercase;
+  }
+  .lead{font-size:clamp(16px,1.55vw,20px);line-height:1.52;max-width:60ch}
+  .mono{font-family:var(--font-pixel);font-size:19px;letter-spacing:1px}
+  .hl-lime{color:var(--lime)}
+  .hl-orange{color:var(--orange)}
+  .hl-pink{color:var(--pink)}
+
+  /* STICKERS, STARS, TAGS, BUTTONS */
+  .sticker{
+    display:inline-block;
+    font-family:var(--font-pixel);font-size:clamp(14px,1.5vw,19px);
+    letter-spacing:1.5px;text-transform:uppercase;
+    padding:6px 12px 3px;
+    border:3px solid var(--ink);
+    background:var(--lime);color:var(--ink);
+    box-shadow:4px 4px 0 var(--ink);
+    transform:rotate(-4deg);
+  }
+  .sticker.o{background:var(--orange);color:var(--ink)}
+  .sticker.p{background:var(--pink);color:var(--ink)}
+  .sticker.w{background:var(--white);color:var(--ink)}
+  .sticker.r2{transform:rotate(3deg)}
+  .sticker.r3{transform:rotate(-8deg)}
+
+  .star{display:inline-block;width:1em;height:1em;vertical-align:middle}
+  .spin{animation:spin 6s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .tags{display:flex;flex-wrap:wrap;gap:9px;margin-top:6px}
+  .tag{
+    font-family:var(--font-pixel);font-size:16px;letter-spacing:1px;
+    text-transform:uppercase;
+    padding:4px 11px 2px;border:2px solid currentColor;
+  }
+
+  .btnrow{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px}
+  .btn{
+    display:inline-flex;align-items:center;gap:.6em;
+    font-family:var(--font-display);font-size:clamp(16px,1.6vw,20px);
+    letter-spacing:.5px;text-transform:uppercase;
+    padding:11px 19px 9px;border:3px solid var(--ink);
+    background:var(--ink);color:var(--lime);
+    box-shadow:5px 5px 0 var(--lime);
+    transition:transform .18s var(--snap),box-shadow .18s var(--pop),background .18s,color .18s;
+  }
+  .btn:hover{transform:translate(-3px,-3px);box-shadow:8px 8px 0 var(--lime)}
+  .btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--lime)}
+  .btn.fill{background:var(--lime);color:var(--ink);box-shadow:5px 5px 0 var(--ink)}
+  .btn.fill:hover{box-shadow:8px 8px 0 var(--ink)}
+  .btn.ghost{background:transparent;color:currentColor;box-shadow:5px 5px 0 currentColor}
+  .s-orange .btn,.s-lime .btn,.s-bone .btn{border-color:var(--ink)}
+
+  /* MARQUEE (in-flow, full bleed to the viewport edges) */
+  .marquee{
+    overflow:hidden;white-space:nowrap;width:100%;
+    border-top:3px solid currentColor;border-bottom:3px solid currentColor;
+    padding:7px 0;
+  }
+  .marquee.bleed{width:calc(100% + 2 * var(--edge));max-width:none;margin-left:calc(-1 * var(--edge));margin-right:calc(-1 * var(--edge))}
+  .marquee .track{
+    display:inline-block;white-space:nowrap;
+    font-family:var(--font-display);font-size:clamp(22px,3.2vw,38px);
+    letter-spacing:1px;text-transform:uppercase;
+    animation:scroll 22s linear infinite;will-change:transform;
+  }
+  .marquee.rtl .track{animation-direction:reverse}
+  .marquee .track span{padding:0 .35em}
+  .marquee .track .s{color:var(--orange)}
+  @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .marquee.thin .track{font-family:var(--font-pixel);font-size:clamp(18px,2vw,24px);letter-spacing:2px}
+
+  /* SLIDE 1 COVER */
+  .cover{display:flex;flex-direction:column;gap:clamp(12px,2.2vh,24px)}
+  .cover .toprow{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+  .cover .stickwrap{display:flex;gap:9px;flex-wrap:wrap}
+  .cover .title{position:relative}
+  .cover .title .huge{color:var(--lime)}
+  .cover .title .huge .o{color:var(--orange)}
+  .cover .floatstar{
+    position:absolute;right:0;top:-.15em;width:clamp(54px,10vw,128px);height:auto;color:var(--orange);
+  }
+  .cover .botrow{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap}
+
+  /* SLIDE 2 BIO */
+  .bio-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:clamp(20px,3.4vw,46px);align-items:start}
+  .bio-meta{display:flex;flex-direction:column;gap:14px}
+  .meta-card{border:3px solid var(--ink);padding:13px 15px;background:rgba(255,255,255,.18)}
+  .meta-card .k{font-family:var(--font-pixel);font-size:16px;letter-spacing:1px;text-transform:uppercase;opacity:.8}
+  .meta-card .v{font-family:var(--font-display);font-size:clamp(20px,2.1vw,27px);text-transform:uppercase;line-height:1}
+
+  /* SLIDE 3 RELEASES */
+  .rel-hero{
+    border:3px solid var(--lime);padding:clamp(14px,2.4vw,22px);
+    display:flex;justify-content:space-between;gap:18px;align-items:flex-end;flex-wrap:wrap;
+    background:linear-gradient(120deg,rgba(255,88,38,.16),rgba(208,245,58,.10));
+    margin-bottom:10px;
+  }
+  .rel-list{display:flex;flex-direction:column}
+  .rel-row{
+    display:grid;grid-template-columns:1fr auto auto;gap:16px;align-items:baseline;
+    padding:8px 4px;border-top:2px solid rgba(255,255,255,.18);
+    transition:padding-left .2s var(--pop),color .2s;
+  }
+  .rel-row:hover{padding-left:14px;color:var(--lime)}
+  .rel-row .t{font-family:var(--font-display);font-size:clamp(20px,2.6vw,32px);text-transform:uppercase;line-height:1}
+  .rel-row .ty{font-family:var(--font-pixel);font-size:17px;letter-spacing:1px;text-transform:uppercase;opacity:.8}
+  .rel-row .yr{font-family:var(--font-pixel);font-size:20px;letter-spacing:1px;color:var(--orange)}
+
+  /* SLIDE 4 STATS */
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;border:3px solid var(--ink);background:var(--ink)}
+  .stat{background:var(--lime);color:var(--ink);padding:clamp(12px,2vw,22px);min-height:80px;display:flex;flex-direction:column;justify-content:center}
+  .stat .n{font-family:var(--font-display);font-size:clamp(38px,5.2vw,74px);line-height:.82;letter-spacing:-1px}
+  .stat .l{font-family:var(--font-pixel);font-size:clamp(14px,1.5vw,18px);letter-spacing:1.5px;text-transform:uppercase;margin-top:5px}
+  .stat:hover{background:var(--orange)}
+  .stat:hover .n{color:var(--ink)}
+
+  /* SLIDE 5 PRESS */
+  .quote-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .quote{border:3px solid var(--ink);padding:clamp(13px,2vw,22px);position:relative;background:var(--white)}
+  .quote .mk{font-family:var(--font-display);font-size:54px;line-height:.5;color:var(--orange);height:.5em;display:block}
+  .quote p{font-size:clamp(16px,1.8vw,20px);font-weight:600;line-height:1.3;margin:4px 0 9px}
+  .quote .src{font-family:var(--font-pixel);font-size:17px;letter-spacing:1.5px;text-transform:uppercase}
+  .quote:nth-child(2),.quote:nth-child(3){background:var(--lime)}
+
+  /* SLIDE 6 TOUR */
+  .tour-list{display:flex;flex-direction:column;border-top:3px solid var(--orange)}
+  .tour-row{
+    display:grid;grid-template-columns:auto 1fr auto auto;gap:clamp(12px,2.2vw,30px);align-items:center;
+    padding:9px 4px;border-bottom:2px solid rgba(255,255,255,.16);
+    transition:background .2s,padding-left .2s var(--pop);
+  }
+  .tour-row:hover{background:rgba(255,88,38,.12);padding-left:12px}
+  .tour-row .date{font-family:var(--font-pixel);font-size:clamp(17px,1.9vw,22px);letter-spacing:1px;color:var(--lime);white-space:nowrap}
+  .tour-row .city{font-family:var(--font-display);font-size:clamp(20px,2.8vw,34px);text-transform:uppercase;line-height:1}
+  .tour-row .venue{font-family:var(--font-pixel);font-size:17px;letter-spacing:1px;text-transform:uppercase;opacity:.8;text-align:right}
+  .status{
+    font-family:var(--font-pixel);font-size:16px;letter-spacing:1.5px;text-transform:uppercase;
+    padding:4px 11px 2px;border:2px solid currentColor;white-space:nowrap;text-align:center;justify-self:end;
+  }
+  .status.sold{background:var(--orange);color:var(--ink);border-color:var(--ink)}
+  .status.few{background:var(--pink);color:var(--ink);border-color:var(--ink)}
+  .status.on{color:var(--lime)}
+
+  /* SLIDE 7 GALLERY: portrait press photos, dynamic height, scrolls sideways so the shots can stay large */
+  .gal-strip{
+    display:flex;gap:14px;margin-top:14px;
+    height:clamp(360px, 56vh, 900px);     /* dynamic: up to 900, never below 360 */
+    overflow-x:auto;overflow-y:hidden;
+    scroll-snap-type:x proximity;padding-bottom:12px;
+    scrollbar-width:thin;scrollbar-color:var(--ink) transparent;
+  }
+  .gal-strip::-webkit-scrollbar{height:10px}
+  .gal-strip::-webkit-scrollbar-track{background:rgba(11,11,11,.12)}
+  .gal-strip::-webkit-scrollbar-thumb{background:var(--ink)}
+  /* slide 07 step arrows: scroll the strip one photo at a time */
+  .gal-nav{display:flex;gap:8px}
+  .gal-arrow{
+    width:44px;height:44px;display:grid;place-items:center;
+    background:var(--ink);color:var(--lime);border:3px solid var(--ink);
+    transition:transform .16s var(--snap),opacity .16s,background .16s,color .16s;
+  }
+  .gal-arrow:hover{background:var(--lime);color:var(--ink)}
+  .gal-arrow:active{transform:scale(.9)}
+  .gal-arrow:disabled{opacity:.32;cursor:not-allowed}
+  .gal-arrow svg{width:22px;height:22px}
+  .shot{
+    flex:0 0 auto;height:100%;aspect-ratio:3/4;       /* portrait */
+    scroll-snap-align:start;position:relative;overflow:hidden;
+    border:3px solid var(--ink);display:flex;align-items:flex-end;
+    transition:transform .25s var(--snap);
+  }
+  .shot:hover{transform:translateY(-6px)}
+  .shot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+  .shot .cap{
+    position:relative;z-index:1;width:100%;font-family:var(--font-pixel);font-size:15px;letter-spacing:1px;
+    padding:6px 9px 4px;background:var(--ink);color:var(--lime);text-transform:uppercase;
+  }
+  /* coloured block shows while the sample photo loads or if it is blocked */
+  .shot:nth-child(1){background:linear-gradient(150deg,var(--orange),var(--pink))}
+  .shot:nth-child(2){background:linear-gradient(150deg,var(--lime),var(--orange))}
+  .shot:nth-child(3){background:linear-gradient(150deg,var(--pink),var(--lime))}
+  .shot:nth-child(4){background:linear-gradient(150deg,var(--orange),var(--lime))}
+  .shot:nth-child(5){background:linear-gradient(150deg,var(--lime),var(--pink))}
+  .shot:nth-child(6){background:linear-gradient(150deg,var(--pink),var(--orange))}
+  .shot:nth-child(7){background:linear-gradient(150deg,var(--orange),var(--ink))}
+  .shot:nth-child(8){background:linear-gradient(150deg,var(--lime),var(--ink))}
+
+  /* SLIDE 8 CONTACT */
+  .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .cc{border:3px solid var(--lime);padding:11px 14px;background:rgba(208,245,58,.06)}
+  .cc .k{font-family:var(--font-pixel);font-size:16px;letter-spacing:1.5px;text-transform:uppercase;color:var(--lime)}
+  .cc .v{font-family:var(--font-display);font-size:clamp(20px,2.3vw,28px);text-transform:uppercase;line-height:1.05;margin-top:4px}
+  .cc a:hover{color:var(--orange)}
+  .socials{display:flex;flex-wrap:wrap;gap:9px;margin-top:6px}
+
+  /* SLIDE 9 CROSS PROMO */
+  .promo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .promo{
+    border:3px solid var(--lime);padding:15px;background:var(--ink-2);
+    display:flex;flex-direction:column;gap:7px;min-height:128px;
+    transition:transform .22s var(--snap),box-shadow .22s var(--pop);
+  }
+  .promo:hover{transform:translate(-4px,-4px);box-shadow:8px 8px 0 var(--orange)}
+  .promo .tm{font-family:var(--font-pixel);font-size:16px;letter-spacing:1.5px;color:var(--orange)}
+  .promo .nm{font-family:var(--font-display);font-size:clamp(22px,2.6vw,34px);text-transform:uppercase;line-height:.94;color:var(--lime)}
+  .promo .ds{font-size:14px;opacity:.82;margin-top:auto}
+
+  /* PREV / NEXT PILLS (desktop) */
+  /* fixed footer bar: static, mirrors the header, never rides the transition */
+  .footerbar{
+    position:fixed;left:0;right:0;bottom:0;z-index:60;
+    height:var(--foot);
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:0 var(--edge);
+    background:var(--ink);
+    border-top:3px solid var(--orange);
+  }
+  .foot-credit{
+    font-family:var(--font-pixel);font-size:16px;letter-spacing:1px;
+    color:rgba(255,255,255,.72);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;
+  }
+  .foot-credit a{color:var(--orange)}
+  .foot-credit a:hover{color:var(--lime)}
+  .nav-pills{display:flex;gap:10px;flex:0 0 auto}
+  .pill{
+    width:44px;height:44px;display:grid;place-items:center;
+    background:var(--ink);color:var(--lime);border:3px solid var(--lime);
+    transition:transform .16s var(--snap),background .16s,color .16s;
+  }
+  .pill:hover{background:var(--lime);color:var(--ink)}
+  .pill:active{transform:scale(.9)}
+  .pill:disabled{opacity:.3;cursor:not-allowed}
+  .pill svg{width:23px;height:23px}
+
+  /* POPUP NAV MENU */
+  .nav-pop{
+    position:fixed;inset:0;z-index:90;
+    background:var(--ink);
+    display:flex;flex-direction:column;
+    transform:translateY(-100%);
+    transition:transform .5s var(--pop);
+    overflow-y:auto;                 /* landscape / short viewport safe */
+    padding:80px var(--edge);        /* generous top + bottom */
+  }
+  .nav-pop.open{transform:none}
+  .nav-pop .nav-head{
+    display:flex;justify-content:space-between;align-items:center;gap:18px;
+    border-bottom:3px solid var(--lime);padding-bottom:16px;margin-bottom:auto;
+  }
+  .nav-pop .x{
+    font-family:var(--font-pixel);font-size:23px;letter-spacing:2px;
+    background:var(--lime);color:var(--ink);padding:5px 15px 3px;border:3px solid var(--ink);
+    box-shadow:4px 4px 0 var(--orange);
+  }
+  .nav-list{list-style:none;display:flex;flex-direction:column;gap:2px;margin:auto 0}
+  .nav-list li a{
+    display:flex;align-items:baseline;gap:16px;
+    font-family:var(--font-display);font-size:clamp(22px,3.6vw,42px);
+    text-transform:uppercase;line-height:1.02;color:var(--white);
+    padding:4px 0;transition:color .15s,transform .2s var(--pop);
+  }
+  .nav-list li a .ix{font-family:var(--font-pixel);font-size:clamp(17px,1.9vw,24px);color:var(--orange);min-width:2.4em}
+  .nav-list li a:hover{color:var(--lime);transform:translateX(14px)}
+  .nav-list li a:hover .ix{color:var(--lime)}
+  .nav-foot{
+    margin-top:auto;padding-top:16px;border-top:3px solid var(--orange);
+    font-family:var(--font-pixel);font-size:18px;letter-spacing:1px;color:rgba(255,255,255,.7);
+  }
+  .nav-foot a{color:var(--orange)}
+
+  /* REVEALS */
+  [data-reveal]{opacity:0;transform:translateY(22px);transition:opacity .46s var(--pop),transform .46s var(--pop)}
+  [data-reveal].in{opacity:1;transform:none}
+  .slide.out [data-reveal]{transition:opacity .26s var(--pop),transform .26s var(--pop)}  /* snappy staggered exit */
+
+  /* RESPONSIVE */
+  @media (max-width:900px){
+    .bio-grid{grid-template-columns:1fr}
+    .quote-grid,.contact-grid{grid-template-columns:1fr}
+    .stat-grid{grid-template-columns:repeat(2,1fr)}
+    .gal-strip{height:clamp(360px, 54vh, 700px)}
+    .promo-grid{grid-template-columns:1fr}
+    .rel-row{grid-template-columns:1fr auto;row-gap:2px}
+    .rel-row .ty{grid-column:1;opacity:.7}
+    .tour-row{grid-template-columns:1fr auto;row-gap:4px}
+    .tour-row .venue{grid-column:1;text-align:left}
+    .tour-row .status{grid-column:2;grid-row:1}
+  }
+  @media (max-width:640px){
+    :root{--bar:54px;--foot:46px}
+    .counter{display:none}
+    .foot-credit .fc-long{display:none}
+    .foot-credit{font-size:14px}
+    .pill{width:40px;height:40px}
+    .pill svg{width:21px;height:21px}
+    .gal-strip{height:clamp(360px, 56vh, 520px)}
+    .cover .floatstar{display:none}
+  }
+
+
+  /* ===== PORTFOLIO ADDITIONS ===== */
+  .edit{opacity:.8;font-style:italic}
+  :focus-visible{outline:3px solid var(--pink);outline-offset:3px}
+  .btn.sm{font-size:15px;padding:8px 14px 6px;box-shadow:4px 4px 0 var(--orange)}
+  .btn.sm.fill{box-shadow:4px 4px 0 var(--ink)}
+
+  /* profile photo placeholder */
+  .photo-ph{aspect-ratio:3/4;max-height:300px;border:3px dashed var(--ink);display:grid;place-items:center;text-align:center;
+    background:rgba(255,255,255,.18);font-family:var(--font-pixel);font-size:22px;letter-spacing:2px;overflow:hidden}
+  .photo-ph img{width:100%;height:100%;object-fit:cover}
+
+  /* timeline */
+  .timeline{list-style:none;border-left:3px solid var(--orange);margin-left:6px}
+  .step{display:grid;grid-template-columns:110px 1fr;gap:16px;padding:12px 0 12px 20px;position:relative;border-bottom:2px solid rgba(255,255,255,.14)}
+  .step::before{content:"";position:absolute;left:-11px;top:20px;width:19px;height:19px;background:var(--lime);border:3px solid var(--ink);border-radius:50%}
+  .step .yr{font-family:var(--font-pixel);font-size:22px;color:var(--orange);letter-spacing:1px}
+  .step .t{font-family:var(--font-display);font-size:clamp(20px,2.6vw,32px);text-transform:uppercase;line-height:1.05;color:var(--lime)}
+  .step p{margin-top:4px;opacity:.85}
+
+  /* skills */
+  .skill-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .skill{border:3px solid var(--ink);background:rgba(255,255,255,.28);padding:16px;display:flex;flex-direction:column;gap:6px;
+    transition:transform .22s var(--snap),background .2s}
+  .skill:hover{transform:translate(-3px,-3px) rotate(-.6deg);background:var(--orange)}
+  .skill .n{font-family:var(--font-display);font-size:clamp(20px,2.3vw,30px);text-transform:uppercase;line-height:1}
+  .skill .l{font-family:var(--font-pixel);font-size:17px;letter-spacing:1.5px;text-transform:uppercase}
+  .skill .bar{display:block;height:12px;border:3px solid var(--ink);margin-top:6px;background:rgba(255,255,255,.4)}
+  .skill .bar b{display:block;height:100%;width:0;background:var(--ink);transition:width .9s var(--pop) .3s}
+  .skill.in .bar b{width:var(--lvl,50%)}
+
+  /* projects */
+  .proj-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .proj{border:3px solid var(--ink);background:var(--white);display:flex;flex-direction:column;transition:transform .22s var(--snap)}
+  .proj:hover{transform:translateY(-5px)}
+  .proj img{width:100%;aspect-ratio:16/10;object-fit:cover;border-bottom:3px solid var(--ink)}
+  .proj .pb{padding:14px;display:flex;flex-direction:column;gap:8px}
+  .proj h3{font-family:var(--font-display);font-size:26px;text-transform:uppercase;line-height:1}
+  .proj p{font-size:15px}
+
+  /* goals */
+  .statements{display:flex;flex-direction:column}
+  .stmt{font-family:var(--font-display);font-size:clamp(26px,5vw,62px);text-transform:uppercase;line-height:1.02;
+    padding:10px 0;border-top:3px solid rgba(255,255,255,.16);transition:padding-left .25s var(--pop),color .2s}
+  .stmt:hover{padding-left:16px;color:var(--lime)}
+  .stmt .ix{font-family:var(--font-pixel);font-size:22px;color:var(--orange);margin-right:14px;vertical-align:middle}
+
+  /* contact buttons */
+  .contact-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .cbtn{display:flex;align-items:center;gap:14px;padding:16px 18px;border:3px solid var(--lime);background:var(--ink-2);min-height:64px;
+    box-shadow:5px 5px 0 var(--lime);transition:transform .18s var(--snap),box-shadow .18s var(--pop),background .18s,color .18s}
+  .cbtn:hover{transform:translate(-3px,-3px);box-shadow:8px 8px 0 var(--orange);background:var(--lime);color:var(--ink)}
+  .cbtn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--orange)}
+  .cbtn svg{width:34px;height:34px;flex:0 0 auto}
+  .cbtn b{display:block;font-family:var(--font-display);font-weight:400;font-size:22px;text-transform:uppercase;line-height:1}
+  .cbtn i{display:block;font-style:normal;font-family:var(--font-pixel);font-size:19px;letter-spacing:1px;margin-top:3px}
+
+  @media (max-width:900px){
+    .skill-grid,.proj-grid,.contact-btns{grid-template-columns:1fr}
+    .step{grid-template-columns:1fr;gap:2px}
+    .photo-ph{max-height:220px;aspect-ratio:auto;height:200px}
+  }
+  @media (prefers-reduced-motion:reduce){ .skill .bar b{transition:none} }
+
+  /* REDUCED MOTION */
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+    .marquee .track{animation:none;transform:none}
+    .spin{animation:none}
+    [data-reveal]{opacity:1;transform:none}
+    .slide,.slide.active,.slide.leaving{transition-delay:0s !important;transition-duration:.001ms !important}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== TOP BAR ===================== -->
+<header class="topbar">
+  <a href="#" class="mark" data-goto="0" aria-label="ARYAN, go to home">AR<b>YAN</b><span class="dot"></span></a>
+  <div class="topright">
+    <span class="counter" aria-label="Slide counter"><span class="now">01</span> / 09</span>
+    <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">MENU +</button>
+  </div>
+</header>
+<div class="progress" aria-hidden="true"><i id="progBar"></i></div>
+
+<!-- ===================== DECK =====================
+  EDIT GUIDE: every piece of text you can change is plain HTML below.
+  Look for the comments that say "EDIT:" to find the spots to personalise.
+-->
+<main class="deck" id="deck">
+  <div class="stage-bg" id="stageBg" aria-hidden="true"></div>
+
+  <!-- ============ SLIDE 1 : HOME ============ -->
+  <section class="slide s-ink active" data-slide="0" aria-label="Home">
+    <div class="inner scrollable">
+      <div class="wrap cover">
+        <div class="toprow" data-reveal>
+          <span class="kicker hl-lime">Personal Portfolio · 2026</span>
+          <div class="stickwrap">
+            <span class="sticker o">Always Learning</span>
+            <span class="sticker r2">Work In Progress</span>
+          </div>
+        </div>
+
+        <div class="title" data-reveal>
+          <svg class="star spin floatstar" viewBox="0 0 100 100" fill="currentColor" aria-hidden="true">
+            <path d="M50 0c4 28 18 42 50 50-32 8-46 22-50 50-4-28-18-42-50-50 32-8 46-22 50-50z"/>
+          </svg>
+          <h1 class="huge">AR<span class="o">YAN</span></h1>
+        </div>
+
+        <p class="mid hl-lime" data-reveal>Building My Future, One Idea at a Time.</p>
+        <p class="lead" data-reveal>
+          Welcome to my personal space — a place where I share my journey, interests, skills, projects, and ambitions.
+        </p>
+
+        <div class="botrow" data-reveal>
+          <div class="btnrow">
+            <a class="btn fill" href="#" data-goto="1">Explore My World</a>
+            <a class="btn" href="#" data-goto="4">View My Projects</a>
+            <a class="btn ghost" href="#" data-goto="7">Contact Me</a>
+          </div>
+          <span class="mono">PORTFOLIO / 2026</span>
+        </div>
+      </div>
+
+      <div class="marquee bleed" data-reveal style="margin-top:20px;border-bottom:none;background:var(--lime);color:var(--ink)" aria-hidden="true">
+        <div class="track">
+          <span>Building my future</span><span class="s">&#10022;</span>
+          <span>One idea at a time</span><span class="s">&#10022;</span>
+          <span>Always learning</span><span class="s">&#10022;</span>
+          <span>Building my future</span><span class="s">&#10022;</span>
+          <span>One idea at a time</span><span class="s">&#10022;</span>
+          <span>Always learning</span><span class="s">&#10022;</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 2 : ABOUT ============ -->
+  <section class="slide s-orange" data-slide="1" aria-label="About me">
+    <div class="inner scrollable">
+      <div class="wrap">
+        <span class="kicker" data-reveal>02 / About</span>
+        <h2 class="big" data-reveal style="margin:6px 0 16px">About<br>Me</h2>
+        <div class="bio-grid">
+          <div data-reveal>
+            <!-- EDIT: replace these paragraphs with your own story -->
+            <p class="lead" style="margin-bottom:14px">
+              Hi, I'm Aryan. <span class="edit">[EDIT: Write 2–3 sentences about your background and who you are.]</span>
+            </p>
+            <p class="lead">
+              <span class="edit">[EDIT: Describe your personality and what drives you.]</span>
+            </p>
+            <div class="tags" style="margin-top:18px">
+              <!-- EDIT: add or remove interest tags -->
+              <span class="tag">Technology</span>
+              <span class="tag">Learning</span>
+              <span class="tag">Creativity</span>
+              <span class="tag">[Your interest]</span>
+            </div>
+          </div>
+          <div class="bio-meta" data-reveal>
+            <!-- EDIT: replace this placeholder with your photo, e.g. images/aryan.jpg -->
+            <div class="photo-ph" role="img" aria-label="Profile photo placeholder. Replace with Aryan's photograph.">
+              <!-- <img src="images/aryan.jpg" alt="Portrait of Aryan"> -->
+              <span>YOUR PHOTO<br>GOES HERE</span>
+            </div>
+            <div class="meta-card"><div class="k">Education</div><div class="v edit">[Add school / course]</div></div>
+            <div class="meta-card"><div class="k">Interests</div><div class="v edit">[Add interests]</div></div>
+            <div class="meta-card"><div class="k">Ambition</div><div class="v edit">[Add ambition]</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 3 : JOURNEY ============ -->
+  <section class="slide s-ink" data-slide="2" aria-label="My journey">
+    <div class="inner scrollable">
+      <div class="wrap">
+        <span class="kicker hl-orange" data-reveal>03 / Journey</span>
+        <h2 class="big hl-lime" data-reveal style="margin:6px 0 14px">My Journey</h2>
+        <!-- EDIT: each .step is one milestone. Copy a block to add more. -->
+        <ol class="timeline">
+          <li class="step" data-reveal><span class="yr">[Year]</span><div><span class="t">Education</span><p class="edit">[Add your school or course details.]</p></div></li>
+          <li class="step" data-reveal><span class="yr">[Year]</span><div><span class="t">First Steps In Tech</span><p class="edit">[Describe when and how you started.]</p></div></li>
+          <li class="step" data-reveal><span class="yr">[Year]</span><div><span class="t">A Milestone</span><p class="edit">[Add a project, event or achievement.]</p></div></li>
+          <li class="step" data-reveal><span class="yr">Now</span><div><span class="t">Still Building</span><p class="edit">[Describe what you're working on today.]</p></div></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 4 : SKILLS ============ -->
+  <section class="slide s-lime" data-slide="3" aria-label="Skills and interests">
+    <div class="inner scrollable">
+      <div class="wrap">
+        <span class="kicker" data-reveal>04 / Skills</span>
+        <h2 class="big" data-reveal style="margin:6px 0 16px">Skills &amp;<br>Interests</h2>
+        <!-- EDIT: change --lvl (0%–100%) and the status word on each card -->
+        <div class="skill-grid">
+          <div class="skill" data-reveal style="--lvl:50%"><span class="n">Programming</span><span class="l">Status: Learning</span><i class="bar"><b></b></i></div>
+          <div class="skill" data-reveal style="--lvl:50%"><span class="n">Artificial Intelligence</span><span class="l">Status: Exploring</span><i class="bar"><b></b></i></div>
+          <div class="skill" data-reveal style="--lvl:50%"><span class="n">Web Development</span><span class="l">Status: Learning</span><i class="bar"><b></b></i></div>
+          <div class="skill" data-reveal style="--lvl:50%"><span class="n">Creativity &amp; Design</span><span class="l">Status: Exploring</span><i class="bar"><b></b></i></div>
+          <div class="skill" data-reveal style="--lvl:50%"><span class="n">Problem Solving</span><span class="l">Status: Practising</span><i class="bar"><b></b></i></div>
+          <div class="skill" data-reveal style="--lvl:50%"><span class="n">Learning New Tech</span><span class="l">Status: Always</span><i class="bar"><b></b></i></div>
+        </div>
+        <p class="mono" data-reveal style="margin-top:14px">Bars are placeholders. Set your real level when you're ready.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 5 : PROJECTS ============ -->
+  <section class="slide s-bone" data-slide="4" aria-label="My projects">
+    <div class="inner scrollable">
+      <div class="wrap">
+        <span class="kicker hl-orange" data-reveal>05 / Projects</span>
+        <h2 class="big" data-reveal style="margin:6px 0 16px">My<br>Projects</h2>
+        <!-- EDIT: replace title, description, tech tags, image and the two links in each card -->
+        <div class="proj-grid">
+          <article class="proj" data-reveal>
+            <img src="images/pic-04.jpg" alt="Desk with laptop, books and sketchbook (placeholder project thumbnail)" loading="lazy">
+            <div class="pb">
+              <h3>Project One</h3>
+              <p>[EDIT: Describe what this project is and what it does.]</p>
+              <div class="tags"><span class="tag">HTML</span><span class="tag">CSS</span><span class="tag">JS</span></div>
+              <div class="btnrow"><a class="btn fill sm" href="#" aria-label="View Project One">View Project</a><a class="btn sm" href="#" aria-label="Project One on GitHub">GitHub</a></div>
+            </div>
+          </article>
+          <article class="proj" data-reveal>
+            <img src="images/pic-03.jpg" alt="Silhouette under swirling star trails (placeholder project thumbnail)" loading="lazy">
+            <div class="pb">
+              <h3>Project Two</h3>
+              <p>[EDIT: Describe what this project is and what it does.]</p>
+              <div class="tags"><span class="tag">[Tech]</span><span class="tag">[Tech]</span></div>
+              <div class="btnrow"><a class="btn fill sm" href="#" aria-label="View Project Two">View Project</a><a class="btn sm" href="#" aria-label="Project Two on GitHub">GitHub</a></div>
+            </div>
+          </article>
+          <article class="proj" data-reveal>
+            <img src="images/pic-01.jpg" alt="City skyline (placeholder project thumbnail)" loading="lazy">
+            <div class="pb">
+              <h3>Project Three</h3>
+              <p>[EDIT: Describe what this project is and what it does.]</p>
+              <div class="tags"><span class="tag">[Tech]</span><span class="tag">[Tech]</span></div>
+              <div class="btnrow"><a class="btn fill sm" href="#" aria-label="View Project Three">View Project</a><a class="btn sm" href="#" aria-label="Project Three on GitHub">GitHub</a></div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 6 : GOALS ============ -->
+  <section class="slide s-ink" data-slide="5" aria-label="Goals and vision">
+    <div class="inner scrollable">
+      <div class="wrap">
+        <span class="kicker hl-orange" data-reveal>06 / Vision</span>
+        <h2 class="big hl-lime" data-reveal style="margin:6px 0 14px">Goals &amp; Vision</h2>
+        <!-- EDIT: replace the statements with your own goals -->
+        <div class="statements">
+          <p class="stmt" data-reveal><span class="ix">01</span>Dream big. <span class="hl-orange edit">[Your goal]</span></p>
+          <p class="stmt" data-reveal><span class="ix">02</span>Stay curious. <span class="hl-orange edit">[Your motivation]</span></p>
+          <p class="stmt" data-reveal><span class="ix">03</span>Keep building. <span class="hl-orange edit">[Your philosophy]</span></p>
+        </div>
+        <p class="mono" data-reveal style="margin-top:14px">Building my future, one idea at a time.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 7 : GALLERY ============ -->
+  <section class="slide s-orange" data-slide="6" aria-label="Gallery">
+    <div class="inner scrollable">
+      <div class="wrap">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap" data-reveal>
+          <div>
+            <span class="kicker">07 / Gallery</span>
+            <h2 class="big" style="margin-top:6px">My Gallery</h2>
+          </div>
+          <div class="gal-nav">
+            <button class="gal-arrow" id="galPrev" aria-label="Previous photo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M15 5l-7 7 7 7"/></svg>
+            </button>
+            <button class="gal-arrow" id="galNext" aria-label="Next photo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+        <!-- EDIT: swap src, alt and caption for your own photos / screenshots -->
+        <div class="gal-strip" id="galStrip" style="margin-top:14px" data-reveal data-noswipe tabindex="0" aria-label="Photo gallery, scroll sideways">
+          <figure class="shot"><img src="images/pic-01.jpg" alt="Sample image: city skyline at golden hour" loading="lazy"><figcaption class="cap">Sample 01</figcaption></figure>
+          <figure class="shot"><img src="images/pic-02.jpg" alt="Sample image: vintage car close-up" loading="lazy"><figcaption class="cap">Sample 02</figcaption></figure>
+          <figure class="shot"><img src="images/pic-03.jpg" alt="Sample image: silhouette under star trails" loading="lazy"><figcaption class="cap">Sample 03</figcaption></figure>
+          <figure class="shot"><img src="images/pic-04.jpg" alt="Sample image: desk with laptop and books" loading="lazy"><figcaption class="cap">Sample 04</figcaption></figure>
+          <figure class="shot"><img src="images/pic-05.jpg" alt="Sample image: black and white subway platform" loading="lazy"><figcaption class="cap">Sample 05</figcaption></figure>
+          <figure class="shot"><img src="images/pic-06.jpg" alt="Sample image: misty mountain forest path" loading="lazy"><figcaption class="cap">Sample 06</figcaption></figure>
+          <figure class="shot"><img src="images/pic-07.jpg" alt="Sample image: lake and dry grass landscape" loading="lazy"><figcaption class="cap">Sample 07</figcaption></figure>
+          <figure class="shot"><img src="images/pic-08.jpg" alt="Sample image: foggy field with two figures" loading="lazy"><figcaption class="cap">Sample 08</figcaption></figure>
+        </div>
+        <p class="mono" data-reveal style="margin-top:12px;color:var(--ink)">Sample images only. Replace them with your own photos, creative work and project screenshots.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 8 : CONTACT ============ -->
+  <section class="slide s-ink" data-slide="7" aria-label="Contact me">
+    <div class="inner scrollable">
+      <div class="wrap">
+        <span class="kicker hl-orange" data-reveal>08 / Contact</span>
+        <h2 class="big hl-lime" data-reveal style="margin:6px 0 16px">Contact<br>Me</h2>
+        <!-- EDIT: contact details live here. Number format: tel:+91XXXXXXXXXX and wa.me/91XXXXXXXXXX -->
+        <div class="contact-btns" data-reveal>
+          <a class="cbtn ig" href="https://www.instagram.com/ar.gulatiiii/" target="_blank" rel="noopener noreferrer" aria-label="Open Aryan's Instagram profile, @ar.gulatiiii">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1" fill="currentColor" stroke="none"/></svg>
+            <span><b>Instagram</b><i>@ar.gulatiiii</i></span>
+          </a>
+          <a class="cbtn call" href="tel:+917669186965" aria-label="Call Aryan on 7669186965">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg>
+            <span><b>Call Me</b><i>7669186965</i></span>
+          </a>
+          <a class="cbtn wa" href="https://wa.me/917669186965" target="_blank" rel="noopener noreferrer" aria-label="Message Aryan on WhatsApp">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 21l1.6-4.7A9 9 0 1 1 8 19.5L3 21z"/><path d="M9 8.5c0 3 3.500 6.500 6.500 6.500l1-1.500-2-1-1 .8c-1-.5-2-1.500-2.500-2.500l.8-1-1-2z" fill="currentColor" stroke="none"/></svg>
+            <span><b>WhatsApp</b><i>+91 7669186965</i></span>
+          </a>
+        </div>
+        <div class="contact-grid" style="margin-top:14px">
+          <div class="cc" data-reveal><div class="k">Instagram</div><div class="v"><a href="https://www.instagram.com/ar.gulatiiii/" target="_blank" rel="noopener noreferrer">@ar.gulatiiii</a></div></div>
+          <div class="cc" data-reveal><div class="k">Phone</div><div class="v"><a href="tel:+917669186965">7669186965</a></div></div>
+          <div class="cc" data-reveal><div class="k">Email</div><div class="v edit">[Add your email]</div></div>
+          <div class="cc" data-reveal><div class="k">Other Links</div><div class="v edit">[GitHub / LinkedIn — optional]</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 9 : MORE ABOUT ARYAN ============ -->
+  <section class="slide s-ink" data-slide="8" aria-label="More about Aryan">
+    <div class="inner scrollable">
+      <div class="wrap">
+        <span class="kicker hl-orange" data-reveal>09 / More</span>
+        <h2 class="big hl-lime" data-reveal style="margin:6px 0 14px">More About<br>Aryan</h2>
+        <!-- EDIT: fill in each card -->
+        <div class="promo-grid">
+          <div class="promo" data-reveal><span class="tm">QUOTES</span><span class="nm">Favourite Quotes</span><span class="ds edit">[Add a quote you live by.]</span></div>
+          <div class="promo" data-reveal><span class="tm">HOBBIES</span><span class="nm">Hobbies</span><span class="ds edit">[Add your hobbies.]</span></div>
+          <div class="promo" data-reveal><span class="tm">PHILOSOPHY</span><span class="nm">Personal Philosophy</span><span class="ds edit">[Add your philosophy.]</span></div>
+          <div class="promo" data-reveal><span class="tm">ACHIEVEMENTS</span><span class="nm">Achievements</span><span class="ds edit">[Add real achievements when ready.]</span></div>
+          <div class="promo" data-reveal><span class="tm">NEXT</span><span class="nm">Future Updates</span><span class="ds edit">[What's coming next?]</span></div>
+        </div>
+        <p class="huge hl-orange" data-reveal style="margin-top:22px;font-size:clamp(34px,7vw,92px);line-height:.95">THIS IS JUST THE<br><span class="hl-lime">BEGINNING.</span></p>
+        <div class="btnrow" data-reveal style="margin-top:18px">
+          <a class="btn fill" href="#" data-goto="7">Contact Me</a>
+          <a class="btn" href="#" data-goto="0">Back To Start</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===================== FIXED FOOTER BAR ===================== -->
+<footer class="footerbar">
+  <span class="foot-credit"><span class="fc-long">ARYAN &middot; Personal Portfolio &middot; </span>&copy; 2026 &middot; <a href="https://www.instagram.com/ar.gulatiiii/" target="_blank" rel="noopener noreferrer">@ar.gulatiiii</a></span>
+  <div class="nav-pills">
+    <button class="pill" id="prevBtn" aria-label="Previous slide">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <button class="pill" id="nextBtn" aria-label="Next slide">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</footer>
+
+<!-- ===================== POPUP NAV ===================== -->
+<nav class="nav-pop" id="navPop" aria-hidden="true" aria-label="Site menu">
+  <div class="nav-head">
+    <span class="mark">AR<b style="color:var(--orange)">YAN</b></span>
+    <button class="x" id="navClose" aria-label="Close menu">CLOSE &#10005;</button>
+  </div>
+  <ul class="nav-list">
+    <li><a href="#" data-goto="0"><span class="ix">01</span>Home</a></li>
+    <li><a href="#" data-goto="1"><span class="ix">02</span>About Me</a></li>
+    <li><a href="#" data-goto="2"><span class="ix">03</span>My Journey</a></li>
+    <li><a href="#" data-goto="3"><span class="ix">04</span>Skills</a></li>
+    <li><a href="#" data-goto="4"><span class="ix">05</span>Projects</a></li>
+    <li><a href="#" data-goto="5"><span class="ix">06</span>Goals &amp; Vision</a></li>
+    <li><a href="#" data-goto="6"><span class="ix">07</span>Gallery</a></li>
+    <li><a href="#" data-goto="7"><span class="ix">08</span>Contact</a></li>
+    <li><a href="#" data-goto="8"><span class="ix">09</span>More About Aryan</a></li>
+  </ul>
+  <div class="nav-foot">
+    Arrow keys, swipe, or tap. Instagram: <a href="https://www.instagram.com/ar.gulatiiii/" target="_blank" rel="noopener noreferrer">@ar.gulatiiii</a>
+  </div>
+</nav>
+
+<script>
+(function(){
+  "use strict";
+
+  var deck    = document.getElementById("deck");
+  var slides  = Array.prototype.slice.call(deck.querySelectorAll(".slide"));
+  var total   = slides.length;
+  var current = 0;
+  var animating = false;
+  var pending = null;   /* latest target requested mid transition */
+
+  var nowEl   = document.querySelector(".counter .now");
+  var progBar = document.getElementById("progBar");
+  var menuBtn = document.getElementById("menuBtn");
+  var navPop  = document.getElementById("navPop");
+  var navClose= document.getElementById("navClose");
+  var prevBtn = document.getElementById("prevBtn");
+  var nextBtn = document.getElementById("nextBtn");
+
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* persistent background layer + per slide colour lookup */
+  var stageBg = document.getElementById("stageBg");
+  var rootCS  = getComputedStyle(document.documentElement);
+  var BGVAR   = { "s-ink":"--ink", "s-orange":"--orange", "s-lime":"--lime", "s-bone":"--bone" };
+  function slideColor(slide){
+    var key = ["s-ink","s-orange","s-lime","s-bone"].filter(function(c){ return slide.classList.contains(c); })[0] || "s-ink";
+    return rootCS.getPropertyValue(BGVAR[key]).trim() || "#0B0B0B";
+  }
+
+  /* fill each marquee so the scrolling text always spans the full width
+     and loops with no gap. the track is rebuilt from an even number of
+     identical copies, so the -50% keyframe stays seamless at any width */
+  function debounce(fn, ms){
+    var t; return function(){ clearTimeout(t); t = setTimeout(fn, ms); };
+  }
+  function fillMarquees(){
+    document.querySelectorAll(".marquee").forEach(function(m){
+      var track = m.querySelector(".track");
+      if (!track) return;
+      if (track.dataset.base === undefined){ track.dataset.base = track.innerHTML; }
+      var w = m.clientWidth;
+      /* full reset only when the width truly changed (load or resize), so the
+         post font-load pass never flashes the track away and back */
+      if (track.dataset.fillW !== String(w)){
+        track.dataset.fillW = String(w);
+        track.innerHTML = track.dataset.base;
+      }
+      /* top up only if short, this only ever grows so it cannot flicker */
+      var guard = 0;
+      while (track.scrollWidth < w * 2 && guard < 40){
+        track.insertAdjacentHTML("beforeend", track.dataset.base);
+        guard++;
+      }
+      track.style.animationDuration = Math.max(14, track.scrollWidth / 110).toFixed(1) + "s";
+    });
+  }
+
+  /* reveal items inside a slide, staggered */
+  function reveal(slide){
+    var items = slide.querySelectorAll("[data-reveal]");
+    items.forEach(function(el, i){
+      if (reduced){ el.classList.add("in"); return; }
+      setTimeout(function(){ el.classList.add("in"); }, 90 + i * 80);
+    });
+  }
+
+  /* failsafe: if anything stalls, force everything visible after 3s */
+  setTimeout(function(){
+    document.querySelectorAll("[data-reveal]").forEach(function(el){ el.classList.add("in"); });
+  }, 3000);
+
+  function pad(n){ return (n < 9 ? "0" : "") + (n + 1); }
+
+  function update(){
+    if (nowEl) nowEl.textContent = pad(current);
+    if (progBar) progBar.style.width = ((current + 1) / total * 100) + "%";
+    if (prevBtn) prevBtn.disabled = (current === 0);
+    if (nextBtn) nextBtn.disabled = (current === total - 1);
+  }
+
+  /* transition timing knobs (ms): raise to slow the choreography, lower to speed it */
+  var STEP_OUT = 40;   /* gap between each item leaving */
+  var STEP_IN  = 55;   /* gap between each item arriving */
+  var BG_GAP   = 250;  /* background handoff (outgoing fades, then incoming) */
+
+  function goTo(index){
+    index = Math.max(0, Math.min(total - 1, index));
+    if (index === current) return;
+    if (animating){ pending = index; return; }
+    animating = true;
+
+    var prevS = slides[current];
+    var nextS = slides[index];
+    current = index;
+    update();
+
+    var outItems = Array.prototype.slice.call(prevS.querySelectorAll("[data-reveal].in"));
+    var inItems  = Array.prototype.slice.call(nextS.querySelectorAll("[data-reveal]"));
+    inItems.forEach(function(el){ el.classList.remove("in"); });   /* incoming starts hidden */
+    var innerNext = nextS.querySelector(".inner");
+
+    function finish(){
+      slides.forEach(function(s){ if (s !== nextS){ s.classList.remove("active"); s.classList.remove("leaving"); s.classList.remove("out"); } });
+      animating = false;
+      if (pending !== null){ var p = pending; pending = null; goTo(p); }
+    }
+
+    if (reduced){
+      if (stageBg) stageBg.style.backgroundColor = slideColor(nextS);
+      outItems.forEach(function(el){ el.classList.remove("in"); });
+      prevS.classList.remove("active");
+      nextS.classList.add("active");
+      if (innerNext) innerNext.scrollTop = 0;
+      inItems.forEach(function(el){ el.classList.add("in"); });
+      finish();
+      return;
+    }
+
+    /* PHASE A: outgoing content leaves in sequence (last item first) */
+    prevS.classList.add("out");
+    outItems.slice().reverse().forEach(function(el, i){
+      setTimeout(function(){ el.classList.remove("in"); }, i * STEP_OUT);
+    });
+    var outDone = (outItems.length ? (outItems.length - 1) * STEP_OUT : 0) + 180;
+
+    /* PHASE B: blend the persistent background colour, then swap which
+       slide owns the content. the colour change is one smooth interpolation */
+    setTimeout(function(){
+      if (stageBg) stageBg.style.backgroundColor = slideColor(nextS);
+      prevS.classList.remove("active");
+      prevS.classList.add("leaving");
+      nextS.classList.add("active");
+      if (innerNext) innerNext.scrollTop = 0;
+    }, outDone);
+
+    /* PHASE C: incoming content arrives in sequence as its background appears */
+    setTimeout(function(){
+      inItems.forEach(function(el, i){
+        setTimeout(function(){ el.classList.add("in"); }, i * STEP_IN);
+      });
+    }, outDone + BG_GAP);
+
+    var inDone = (inItems.length ? (inItems.length - 1) * STEP_IN : 0) + 500;
+    setTimeout(finish, outDone + BG_GAP + inDone);
+  }
+
+  function next(){ if (current < total - 1) goTo(current + 1, 1); }
+  function prev(){ if (current > 0) goTo(current - 1, -1); }
+
+  /* ---- menu ---- */
+  function openMenu(){
+    navPop.classList.add("open");
+    navPop.setAttribute("aria-hidden", "false");
+    menuBtn.setAttribute("aria-expanded", "true");
+  }
+  function closeMenu(){
+    navPop.classList.remove("open");
+    navPop.setAttribute("aria-hidden", "true");
+    menuBtn.setAttribute("aria-expanded", "false");
+  }
+  menuBtn.addEventListener("click", openMenu);
+  navClose.addEventListener("click", closeMenu);
+
+  /* ---- data-goto delegation ---- */
+  document.addEventListener("click", function(e){
+    var t = e.target.closest("[data-goto]");
+    if (!t) return;
+    e.preventDefault();
+    var idx = parseInt(t.getAttribute("data-goto"), 10);
+    if (!isNaN(idx)){
+      if (navPop.classList.contains("open")) closeMenu();
+      goTo(idx);
+    }
+  });
+
+  prevBtn.addEventListener("click", prev);
+  nextBtn.addEventListener("click", next);
+
+  /* ---- keyboard ---- */
+  document.addEventListener("keydown", function(e){
+    if (navPop.classList.contains("open")){
+      if (e.key === "Escape") closeMenu();
+      return;
+    }
+    switch(e.key){
+      case "ArrowRight": case "ArrowDown": case "PageDown":
+        e.preventDefault(); next(); break;
+      case "ArrowLeft": case "ArrowUp": case "PageUp":
+        e.preventDefault(); prev(); break;
+      case " ":
+        e.preventDefault(); next(); break;
+      case "Home":
+        e.preventDefault(); goTo(0); break;
+      case "End":
+        e.preventDefault(); goTo(total - 1); break;
+      default:
+        if (/^[1-9]$/.test(e.key)){ e.preventDefault(); goTo(parseInt(e.key,10) - 1); }
+    }
+  });
+
+  /* ---- swipe (axis aware so vertical scroll still works) ---- */
+  var sx = 0, sy = 0, tracking = false;
+  deck.addEventListener("touchstart", function(e){
+    if (e.touches.length !== 1) { tracking = false; return; }
+    if (e.target.closest && e.target.closest("[data-noswipe]")) { tracking = false; return; }
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; tracking = true;
+  }, {passive:true});
+  deck.addEventListener("touchend", function(e){
+    if (!tracking) return;
+    tracking = false;
+    var t = e.changedTouches[0];
+    var dx = t.clientX - sx;
+    var dy = t.clientY - sy;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.4){
+      if (dx < 0) next(); else prev();
+    }
+  }, {passive:true});
+
+  /* slide 07 gallery: step the strip by exactly one photo */
+  (function(){
+    var strip = document.getElementById("galStrip");
+    var gp = document.getElementById("galPrev");
+    var gn = document.getElementById("galNext");
+    if (!strip || !gp || !gn) return;
+    function step(){
+      var card = strip.querySelector(".shot");
+      var cs = getComputedStyle(strip);
+      var gap = parseFloat(cs.columnGap || cs.gap) || 14;
+      return card ? card.getBoundingClientRect().width + gap : strip.clientWidth * 0.8;
+    }
+    function sync(){
+      var max = strip.scrollWidth - strip.clientWidth - 1;
+      gp.disabled = strip.scrollLeft <= 0;
+      gn.disabled = strip.scrollLeft >= max;
+    }
+    var behavior = reduced ? "auto" : "smooth";
+    gp.addEventListener("click", function(){ strip.scrollBy({left:-step(), behavior:behavior}); });
+    gn.addEventListener("click", function(){ strip.scrollBy({left: step(), behavior:behavior}); });
+    strip.addEventListener("scroll", function(){ window.requestAnimationFrame(sync); }, {passive:true});
+    window.addEventListener("resize", debounce(sync, 200));
+    sync();
+  })();
+
+  /* init */
+  if (stageBg) stageBg.style.backgroundColor = slideColor(slides[0]);
+  reveal(slides[0]);
+  update();
+  fillMarquees();
+  if (document.fonts && document.fonts.ready){ document.fonts.ready.then(fillMarquees); }
+  window.addEventListener("resize", debounce(fillMarquees, 200));
+})();
+</script>
+</body>
+</html>
